@@ -1,0 +1,362 @@
+---
+title: "Data Visualization Using ggplot"
+author: "Ilyas Ustun"
+output: 
+    html_document:
+        toc: true
+        toc_float: 
+            collapsed: true
+            smooth_scroll: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this lesson, we will learn how to create very nice plots using the ggplot library. Although creating plots using base R might be easier, to create nice looking plots ggplot is a better approach.
+
+ggplot is present within the greater realm of `tidyverse` - which is library of packages including `dplyr`.
+
+```{r}
+# install.packages("tidyverse")
+library(tidyverse)
+```
+
+Reading in the "auto-mpg.csv" data using tidyverse. The equivalent using base R would be `read.csv()`.
+```{r}
+df = read_csv("auto-mpg.csv")
+```
+
+
+```{r}
+str(df)
+```
+
+```{r}
+glimpse(df)
+```
+
+```{r}
+head(df)
+```
+
+## Scatter plot
+
+Plot of mpg vs horsepower:
+
+using base R:
+```{r}
+plot(df$horsepower, df$mpg)
+```
+
+using ggplot:
+```{r}
+ggplot(df, aes(x=horsepower, y=mpg)) + geom_point()
+```
+
+
+Plot of cylinders vs horsepower:
+
+```{r}
+ggplot(df, aes(x=cylinders, y=mpg)) + geom_point()
+```
+
+
+*jitter* will add randomness to the points in the scatter plot 
+
+```{r}
+ggplot(df, aes(x=cylinders, y=mpg)) + geom_jitter(width = 0.15)
+```
+
+
+Color the points based on cylinders variable:
+
+```{r}
+ggplot(df, aes(x=horsepower, y=mpg, color=cylinders)) + geom_point()
+```
+
+Because cylinders is a numeric variable, the points are colored in a continuous sequential manner.
+
+We can convert `cylinders` variable to categorical type by using `as.factor()`. Here the change is made within ggplot, so the change does not affect the dataset.
+
+```{r}
+ggplot(df, aes(x=horsepower, y=mpg, color=as.factor(cylinders))) + geom_point()
+```
+
+### Converting cylinders to categorical type
+
+Let's convert the cylinders variable to categorical type:
+
+```{r}
+df = df %>% mutate(cyl_cat = as.factor(cylinders))
+
+df$cyl_cat
+str(df)
+```
+
+
+```{r}
+ggplot(df, aes(x=horsepower, y=mpg, color=cyl_cat)) + geom_point()
+```
+
+
+
+### Converting cylinders to categorical ordered type (ordinal variable)
+
+```{r}
+df = df %>% mutate(cylinders = factor(cylinders, levels = c(3, 4, 5, 6, 8), ordered=TRUE))
+
+df$cylinders
+str(df)
+```
+
+
+```{r}
+ggplot(df, aes(x=cylinders, y=mpg)) + geom_jitter(width = 0.15)
+```
+
+```{r}
+ggplot(df, aes(x=horsepower, y=mpg, color=cylinders)) + geom_point()
+```
+
+Scatterplot of mpg vs weight:
+```{r}
+ggplot(df, aes(x=weight, y=mpg)) + geom_point()
+```
+
+Scatterplot of mpg vs weight, colored by number of cylinders:
+```{r}
+ggplot(df, aes(x=weight, y=mpg, color=cylinders)) + geom_point()
+```
+
+The alpha parameter adds transparency to the points:
+```{r}
+ggplot(df, aes(x=weight, y=mpg, color=cylinders)) + geom_point(alpha=0.5)
+```
+
+
+## Line plot
+
+Line plots are generally useful to visualize time series or sequence data. We need to make sure that the interval between each point is consistent (hourly, daily, monthly, etc.). So, we will calculate the average mpg in each year and create a line plot out of it.
+
+```{r}
+unique(df$model_year)
+```
+
+Let's calculate mean mpg for each year. Hint: Make use of group_by(), summarize()
+```{r}
+df_mpg_by_year = df %>%
+    group_by(model_year) %>%
+    summarize(avg_mpg = mean(mpg)) %>%
+    ungroup()
+df_mpg_by_year
+```
+
+Line plot using base R:
+```{r}
+plot(df_mpg_by_year$model_year, df_mpg_by_year$avg_mpg, type='l')
+```
+
+Line plot using ggplot:
+```{r}
+ggplot(df_mpg_by_year, aes(x=model_year, y=avg_mpg)) + 
+    geom_line(size=1)
+```
+
+
+We can add dots as well to make it more readable:
+```{r}
+ggplot(df_mpg_by_year, aes(x=model_year, y=avg_mpg)) + 
+    geom_line(size=1) +
+    geom_point(size=5)
+```
+
+
+
+```{r}
+ggplot(df_mpg_by_year, aes(x=model_year, y=avg_mpg)) + 
+    geom_line(size=1, color='blue') +
+    geom_point(size=5, alpha=0.3, color="blue")
+```
+
+## Bar plot
+
+Useful to show a numeric value vs a categorical value. For example the count of vehicles in each year, the average mpg of each cylinder type, etc.
+
+```{r}
+ggplot(df, aes(x=cylinders)) + 
+    geom_bar()
+```
+
+```{r}
+ggplot(df, aes(x=cylinders, fill=cylinders)) + 
+    geom_bar(color="black")
+```
+
+
+How many vehicles are present in each year?
+```{r}
+ggplot(df, aes(x=model_year)) + 
+    geom_bar()
+```
+
+Count the number of vehicles from each year and plot it using geom_col():
+```{r}
+df_summary = df %>%
+    group_by(model_year) %>%
+    summarize(N = n(), avg_mpg = mean(mpg)) 
+df_summary
+
+df_summary %>%
+    ggplot(aes(x=model_year, y=N)) + 
+    geom_col()
+```
+
+To create bar plot using base R you need to have the summarized data ready.
+```{r}
+barplot(N ~ model_year, data=df_summary)
+```
+
+
+Count the number of vehicles in each year to create a bar plot colored by cylinders:
+
+```{r}
+df %>%
+    ggplot(aes(x=model_year, fill=cylinders)) + 
+    geom_bar()
+```
+
+```{r}
+df %>%
+    ggplot(aes(x=model_year, fill=cylinders)) + 
+    geom_bar(position = "dodge")
+```
+
+
+
+## Histograms
+
+```{r}
+str(df)
+```
+
+Histogram of mpg using base R:
+```{r}
+hist(df$mpg)
+```
+
+
+```{r}
+ggplot(df, aes(x=mpg)) + geom_histogram() 
+```
+
+```{r}
+ggplot(df, aes(x=mpg)) + geom_histogram(binwidth = 2) 
+```
+
+
+```{r}
+ggplot(df, aes(x=mpg, fill=cylinders)) + geom_histogram(binwidth = 2, position= "stack") 
+```
+
+```{r}
+ggplot(df, aes(x=mpg, fill=cylinders)) + geom_histogram(binwidth = 2, position= "identity", alpha =0.5) 
+```
+
+
+
+
+## Boxplots
+
+
+```{r}
+boxplot(df$mpg)
+```
+
+Boxplot of mpg at each cylinder level:
+```{r}
+boxplot(mpg ~ cylinders, data=df)
+```
+
+Let's now create boxplots using ggplot:
+```{r}
+ggplot(df, aes(y=mpg)) + geom_boxplot()
+```
+
+Boxplot of mpg at each cylinder level:
+```{r}
+ggplot(df, aes(x=cylinders, y=mpg)) + geom_boxplot()
+```
+
+```{r}
+ggplot(df, aes(x=cylinders, y=mpg, fill=cylinders)) + geom_boxplot()
+```
+
+
+
+
+## Facets
+
+Grid divided into rows:
+```{r}
+ggplot(df, aes(x=horsepower, y=mpg)) + geom_point() +
+    facet_grid(rows = vars(cylinders))
+```
+
+Grid divided into columns:
+```{r}
+
+ggplot(df, aes(x=horsepower, y=mpg)) + geom_point() +
+    facet_grid(cols = vars(cylinders))
+```
+
+
+Grid divided into both columns and rows:
+```{r}
+ggplot(df, aes(x=horsepower, y=mpg)) + geom_point() +
+    facet_grid(cols = vars(cylinders), rows=vars(origin))
+```
+
+
+Let's create a binary variable for mpg. If a vehicle has less than 20 mpg it will be classified as "low", anything above will be labelled "high".
+```{r}
+df = df %>% mutate(mpg_label = ifelse(mpg > 20, "high", "low"))
+```
+
+
+Now let's use this new variable in one of the grid sections. We will also add a 5th dimension: color. x axis, y axis, row facet, column facet, color each represent a dimension. However, be careful of adding more and more to a figure. As you add more info to a figure it becomes less readable. If there is just too much going on, it defeats the purpose of data viz which mainly is to understand data and get insights.
+
+```{r}
+ggplot(df, aes(x=horsepower, y=weight, color=cylinders)) + geom_point() +
+    facet_grid(cols = vars(mpg_label), rows=vars(origin))
+```
+
+
+
+
+Thank you!  
+Workshop organized at DSI 2022  
+November 19, 2022  
+Houston, TX    
+
+By: Ilyas Ustun  
+Jarvis College of Computing  
+DePaul University  
+Chicago, IL  
+iustun@depaul.edu    
+
+ 
+Twitter:  
+@_ilyas_ustun_   
+
+
+
+
+
+
+
+
+
+
+
+

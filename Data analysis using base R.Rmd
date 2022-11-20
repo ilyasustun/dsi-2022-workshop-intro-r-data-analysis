@@ -1,0 +1,223 @@
+---
+title: "Data Analysis Using Base R"
+author: "Ilyas Ustun"
+output: 
+    html_document:
+        toc: true
+        toc_float: 
+            collapsed: false
+            smooth_scroll: true
+---
+
+twitter: @_ilyas_ustun_
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this lesson we will learn the basics of data analysis in base R.
+
+R has built-in datasets which can be checked with `data()`.
+
+```{r}
+data()
+
+mtcars
+```
+
+Check the structure of the data
+```{r}
+str(mtcars)
+```
+
+Create a summary of each variable (column) using `summary()`
+```{r}
+summary(mtcars)
+```
+
+The outcome of summary is a `table`.
+```{r}
+sm = summary(mtcars)
+class(sm)
+sm[1, ]
+```
+
+It is a good idea to check the first few and last few rows.   
+With `str()`, `summary()`, `tail()`, and `head()` you can get an overall understanding of the data.  
+This will help you spot problems in the data.  
+
+```{r}
+head(mtcars)
+```
+
+```{r}
+tail(mtcars)
+```
+
+To select one of the variables we can use:  
+- `$` symbol after the dataframe name  
+- Selecting by index integer  
+- Selecting by boolean vector  
+- Selecting by column names  
+
+But, be careful! The returned variables can be of different types (vector, dataframe)  
+
+Using the `$` symbol:
+```{r}
+mtcars$cyl
+```
+
+Selecting by index integer:
+```{r}
+mtcars[2]
+```
+
+```{r}
+mtcars[,2]
+```
+
+
+Selecting by boolean vector:
+```{r}
+colnames(mtcars)
+mask = "cyl" == colnames(mtcars)
+mask
+```
+
+```{r}
+mtcars[mask]
+```
+
+```{r}
+mtcars[,mask]
+```
+
+
+Selecting by column names:
+```{r}
+mtcars['cyl']
+```
+
+```{r}
+mtcars[, 'cyl']
+```
+
+
+Selecting by column names:
+`[[]]` returns a vector
+```{r}
+mtcars[['cyl']]
+```
+
+
+For categorical variables, or numeric variables with a few unique values we can get the counts table using `table()`.
+
+Let's first check how many unique values the cylinder variable has:
+```{r}
+unique(mtcars$cyl)
+```
+
+
+Let's see how many vehicles there are in each of the cylinder type: 
+```{r}
+table(mtcars$cyl)
+```
+
+
+Creating a crosstab:
+```{r}
+tab = table(mtcars$cyl, mtcars$gear)
+tab
+rownames(tab) = paste(rownames(tab), 'cyl') 
+tab
+```
+
+
+
+## Filtering rows
+
+```{r}
+head(mtcars)
+```
+
+Only retain those rows where the number of cylinders is equal to 6:
+```{r}
+mtcars$cyl == 6
+```
+
+
+```{r}
+mtcars[mtcars$cyl == 6, ]
+```
+Only retain those rows where the number of cylinders is **NOT** equal to 6:
+```{r}
+mtcars[mtcars$cyl != 6, ]
+```
+
+## Filtering on several conditions
+
+Only retain those rows where the number of cylinders (`cyl`) is **NOT** equal to 6, **AND** the `hp` is greater than 150:
+```{r}
+mtcars[(mtcars$cyl != 6) & (mtcars$hp > 150), ]
+```
+
+
+## Filtering (Rows) and Selection (Columns)
+
+Retain the rows where `cyl` is equal to 6, and only keep the columns `cyl`, `wt`, `mpg`. 
+```{r}
+mtcars[mtcars$cyl == 6, c('cyl', 'wt', 'mpg')]
+```
+
+Retain the rows where `cyl` is equal to 6 OR `wt` is smaller than 3, and only keep the columns `cyl`, `wt`, `mpg`. 
+```{r}
+mtcars[(mtcars$cyl == 6) | (mtcars$wt < 3), c('cyl', 'wt', 'mpg')]
+```
+
+```{r}
+mtcars[(mtcars$cyl == 6) | (mtcars$wt < 3), colnames(mtcars) %in% c('cyl', 'wt', 'mpg')]
+```
+
+## Creating summary statistics
+
+```{r}
+summary(mtcars)
+```
+
+What is the average mpg for each cylinder type?
+```{r}
+mtcars$mpg[mtcars$cyl == 4]
+mean(mtcars$mpg[mtcars$cyl == 4], na.rm=TRUE)
+```
+
+```{r}
+mean(mtcars$mpg[mtcars$cyl == 6], na.rm=TRUE)
+```
+
+```{r}
+mean(mtcars$mpg[mtcars$cyl == 8], na.rm=TRUE)
+```
+
+```{r}
+tapply(mtcars$mpg, mtcars$cyl, mean)
+```
+
+
+
+Thank you!  
+Workshop organized at DSI 2022  
+November 19, 2022  
+Houston, TX    
+
+By: Ilyas Ustun  
+Jarvis College of Computing  
+DePaul University  
+Chicago, IL  
+iustun@depaul.edu    
+
+ 
+Twitter:  
+@_ilyas_ustun_   
+
+
